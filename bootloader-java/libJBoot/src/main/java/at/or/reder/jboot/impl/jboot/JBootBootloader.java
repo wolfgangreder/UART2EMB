@@ -16,6 +16,7 @@
 package at.or.reder.jboot.impl.jboot;
 
 import at.or.reder.jboot.BootloaderFeature;
+import at.or.reder.jboot.JBootNative;
 import at.or.reder.jboot.MemorySpace;
 import at.or.reder.jboot.impl.Crc16InputStream;
 import at.or.reder.jboot.impl.SerialBootloader;
@@ -29,6 +30,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import lombok.NonNull;
 import lombok.extern.java.Log;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
 /**
  *
@@ -37,6 +40,28 @@ import lombok.extern.java.Log;
 @Log(topic = "at.or.reder.jboot.JBootBootloader")
 final class JBootBootloader extends SerialBootloader
 {
+
+  private final JBootNative nativeApi = new JBootNative()
+  {
+    @Override
+    public boolean nop() throws IOException
+    {
+      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public boolean checkFirmware(int crc16) throws IOException
+    {
+      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public ByteBuffer readSignature() throws IOException
+    {
+      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+  };
 
   public JBootBootloader(Map<String, String> settings)
   {
@@ -120,6 +145,12 @@ final class JBootBootloader extends SerialBootloader
     out.write(toSend.getBuffer());
     in.read(response.getBuffer());
     return response;
+  }
+
+  @Override
+  public Lookup getLookup()
+  {
+    return Lookups.singleton(nativeApi);
   }
 
 }

@@ -43,16 +43,12 @@ final class Record
 
   public static Record commandProgram(int data)
   {
-    Record result = new Record(Commands.CMD_PROGRAM);
-    result.setByteValue(data);
-    return result;
+    return new Record(Commands.CMD_PROGRAM).setByteValue(data);
   }
 
   public static Record commandCheckProgram(int crc)
   {
-    Record result = new Record(Commands.CMD_CHECK_PROGRAM);
-    result.setWordValue(crc & 0xffff);
-    return result;
+    return new Record(Commands.CMD_CHECK_PROGRAM).setWordValue(crc & 0xffff);
   }
 
   public static Record commandReboot()
@@ -63,6 +59,12 @@ final class Record
   public static Record commandReadSignature()
   {
     return new Record(Commands.CMD_READ_SIGNATURE);
+  }
+
+  Record()
+  {
+    buffer.array()[0] = SOH;
+    buffer.array()[6] = EOT;
   }
 
   Record(@NonNull Commands command)
@@ -82,10 +84,11 @@ final class Record
     return Commands.valueOfMagic(buffer.get(1)).orElse(null);
   }
 
-  public void setCommand(@NonNull Commands command)
+  public Record setCommand(@NonNull Commands command)
   {
     buffer.put(1,
                command.getMagic());
+    return this;
   }
 
   public int getByteValue()
@@ -93,10 +96,11 @@ final class Record
     return buffer.get(2) & 0xff;
   }
 
-  public void setByteValue(int value)
+  public Record setByteValue(int value)
   {
     buffer.put(2,
                (byte) (value & 0xff));
+    return this;
   }
 
   public short getWordValue()
@@ -104,10 +108,11 @@ final class Record
     return buffer.getShort(2);
   }
 
-  public void setWordValue(int value)
+  public Record setWordValue(int value)
   {
     buffer.putShort(2,
                     (short) (value & 0xffff));
+    return this;
   }
 
   public int getIntValue()
@@ -115,10 +120,11 @@ final class Record
     return buffer.getInt(2);
   }
 
-  public void setIntValue(int value)
+  public Record setIntValue(int value)
   {
     buffer.putInt(2,
                   value);
+    return this;
   }
 
   public ByteBuffer getData()
@@ -127,12 +133,13 @@ final class Record
                         4).duplicate();
   }
 
-  public void setData(ByteBuffer bufferToCopy)
+  public Record setData(ByteBuffer bufferToCopy)
   {
     buffer.put(2,
                bufferToCopy,
                0,
                4);
+    return this;
   }
 
   public ByteBuffer getBuffer()
