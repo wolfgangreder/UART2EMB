@@ -17,6 +17,7 @@ package at.or.reder.jboot.impl;
 
 import at.or.reder.jboot.Bootloader;
 import at.or.reder.jboot.BootloaderFeature;
+import at.or.reder.jboot.BootloaderListener;
 import at.or.reder.jboot.MemorySpace;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,7 +43,8 @@ public abstract class AbstractBootloader implements Bootloader
 
   @Override
   public boolean download(MemorySpace memorySpace,
-                          OutputStream out) throws IOException, UnsupportedOperationException
+                          OutputStream out,
+                          BootloaderListener listener) throws IOException, UnsupportedOperationException
   {
     throw new UnsupportedOperationException("Not supported yet.");
   }

@@ -7,10 +7,10 @@ guava = "32.1.2-jre"
 junit-jupiter = "5.10.0"
 commons-cli = "1.6.0"
 kaitai-struct ="0.10"
-rxtx = "2.1.7"
+rxtx = "2.3.0"
 truth = "1.2.0"
 lookup = "RELEASE180"
-
+mockito = "3.+"
 
 [libraries]
 commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
@@ -18,6 +18,8 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 kaitai-struct = { module="io.kaitai:kaitai-struct-runtime", version.ref = "kaitai-struct" }
-rxtx = { module="org.rxtx:rxtx", version.ref="rxtx" }
+rxtx = { module="at.or.reder:rxtx", version.ref="rxtx" }
 truth = { module = "com.google.truth:truth", version.ref="truth" }
-lookup = {module = "org.netbeans.api:org-openide-util-lookup", version.ref="lookup" }
+lookup = { module = "org.netbeans.api:org-openide-util-lookup", version.ref="lookup" }
+mockito = { module = "org.mockito:mockito-core", version.ref="mockito" }
+mockito-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref="mockito" }

@@ -3,12 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/source/communication.c</file>
             <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/source/communication.h</file>
-            <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/source/init.h</file>
+            <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/source/bootprogram.s</file>
             <file>file:/home/wolfi/eagle/UART2EMB/include/protocol.h</file>
-            <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/memory.hex</file>
-            <file>file:/home/wolfi/eagle/UART2EMB/Bootloader.X/source/boot.c</file>
         </group>
     </open-files>
 </project-private>

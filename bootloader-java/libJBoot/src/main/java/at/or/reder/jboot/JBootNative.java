@@ -16,7 +16,8 @@
 package at.or.reder.jboot;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  *
@@ -27,8 +28,10 @@ public interface JBootNative
 
   public boolean nop() throws IOException;
 
+  public OptionalInt getCrc16() throws IOException;
+
   public boolean checkFirmware(int crc16) throws IOException;
 
-  public ByteBuffer readSignature() throws IOException;
+  public Optional<DeviceSignature> readSignature() throws IOException;
 
 }

@@ -17,6 +17,7 @@ package at.or.reder.jboot.impl.jboot;
 
 import at.or.reder.jboot.Bootloader;
 import at.or.reder.jboot.BootloaderFactory;
+import gnu.io.PortFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
@@ -39,13 +40,15 @@ public class JBootBootloaderFactory implements BootloaderFactory
   @Override
   public UUID getId()
   {
-    return UUID.fromString("8d6672f5-6f95-4edb-a9b3-d65404529e2c");
+    return ID_JBOOT;
   }
 
   @Override
-  public Bootloader createBootloader(Map<String, String> properties) throws IOException
+  public Bootloader createBootloader(Map<String, String> properties,
+                                     PortFactory portFactory) throws IOException
   {
-    return new JBootBootloader(properties);
+    return new JBootBootloader(properties,
+                               portFactory);
   }
 
 }

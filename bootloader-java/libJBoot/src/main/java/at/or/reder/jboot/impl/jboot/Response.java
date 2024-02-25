@@ -25,11 +25,13 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-enum Response
+public enum Response
 {
 
   RSP_OK((byte) 0xff),
   RSP_DONE((byte) 0xfe),
+  RSP_OK_BOOTLOADER((byte) 0xfd),
+  RSP_NOT_IMPLEMENTED((byte) 0xfc),
   RSP_ERR((byte) 0x00);
 
   private final byte magic;
@@ -37,7 +39,7 @@ enum Response
   public static Optional<Response> valueOfMagic(int magic)
   {
     for (Response r : values()) {
-      if (r.getMagic() == (magic & 0xff)) {
+      if (r.getMagic() == (byte) (magic & 0xff)) {
         return Optional.of(r);
       }
     }

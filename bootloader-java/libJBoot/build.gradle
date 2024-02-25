@@ -23,6 +23,7 @@ repositories {
 
 dependencies {
     api libs.lookup
+    api libs.rxtx
 
     annotationProcessor libs.lookup
 
@@ -30,6 +31,8 @@ dependencies {
     testImplementation libs.junit.jupiter
     testImplementation libs.truth
 
+    testImplementation libs.mockito
+    testImplementation libs.mockito.jupiter
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // This dependency is exported to consumers, that is to say found on their compile classpath.
@@ -39,7 +42,6 @@ dependencies {
     implementation libs.guava
     implementation libs.commons.cli
     implementation libs.kaitai.struct
-    implementation libs.rxtx
     
 }
 

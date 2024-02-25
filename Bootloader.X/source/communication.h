@@ -9,31 +9,41 @@
 #define	COMMUNICATION_H
 
 #include "init.h"
+#include "protocol.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
   extern void initUsart();
-  extern void readUsart(uint8_t numBytes, uint8_t* buffer);
-  extern void writeUsart(uint8_t numBytes, uint8_t* buffer);
+  extern void readUsart(CommandRecord* record);
+  extern void writeUsart(CommandRecord* record);
 
   extern void initTwi();
-  extern void readTwi(uint8_t numBytes, uint8_t* buffer);
-  extern void writeTwi(uint8_t numBytes, uint8_t* buffer);
+  extern void readTwi(CommandRecord* record);
+  extern void writeTwi(CommandRecord* record);
+
+  extern void initDummy();
+  extern void readDummy(CommandRecord* record);
+  extern void writeDummy(CommandRecord* record);
 
 
 #if defined PGM_USART
 
 #define initComm initUsart
-#define readComm(numBytes, buffer) readUsart((numBytes),((uint8_t*)(buffer)))
-#define writeComm(numBytes, buffer) writeUsart((numBytes),((uint8_t*)(buffer)))
+#define readComm(buffer) readUsart((buffer))
+#define writeComm(buffer) writeUsart((buffer))
 
 #elif defined PGM_TWI
 
 #define initComm initTwi
-#define readComm(numBytes, buffer) readTwi((numBytes),((uint8_t*)(buffer)))
-#define writeComm(numBytes, buffer) writeTwi((numBytes),((uint8_t*)(buffer)))
+#define readComm(buffer) readTwi((buffer))
+#define writeComm(buffer) writeTwi((buffer))
+
+#elif defined PGM_DUMMY
+#define initComm initDummy
+#define readComm(buffer) readDummy((buffer))
+#define writeComm(buffer) writeDummy((buffer))
 
 #endif
 

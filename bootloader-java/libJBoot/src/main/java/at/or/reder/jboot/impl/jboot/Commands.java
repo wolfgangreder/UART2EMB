@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-enum Commands
+public enum Commands
 {
   CMD_NOP((byte) 0x00),
   CMD_ENTER_BOOTLOADER((byte) 0x02),
@@ -33,6 +33,8 @@ enum Commands
   CMD_CHECK_PROGRAM((byte) 0x06),
   CMD_REBOOT((byte) 0x07),
   CMD_READ_SIGNATURE((byte) 0x08),
+  CMD_READ_EEPROM((byte) 0x09),
+  CMD_WRITE_EEPROM((byte) 0x0a),
   CMD_BOOT_END((byte) 0x0f);
 
   private final byte magic;

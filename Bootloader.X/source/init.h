@@ -8,9 +8,44 @@
 #ifndef INIT_H
 #define	INIT_H
 
-#define F_CPU (7372800)
-
 #include <avr/io.h>
+
+//#define F_CPU (7372800)
+#define F_CPU (14745600)
+
+// drive indicator led
+#ifndef INDICATOR_REG
+#define INDICATOR_REG(reg) reg##D
+#define INDICATOR_BIT1 2
+#define INDICATOR_BIT2 3
+#endif
+
+// implement CMD_EEPROM_READ and CDM_EEPROM_WRITE
+#ifndef CMD_EEPROM
+#define CMD_EEPROM 1
+#endif
+
+// implement CMD_SIGNATURE_READ
+#ifndef CMD_SIGNATURE
+#define CMD_SIGNATURE 1
+#endif
+
+// implement CMD_CHECK_PROGRAM
+#ifndef CMD_CHECKPROGRAM
+#define CMD_CHECKPROGRAM 1
+#endif
+
+// use paranoid initializations
+#ifndef PARANOID_INIT
+#define PARANOID_INIT 1
+#endif
+
+// check page after programming
+#ifndef CHECK_PAGE
+#define CHECK_PAGE 1
+#endif
+
+#ifndef __ASSEMBLER__
 
 #ifdef	__cplusplus
 extern "C" {
@@ -21,19 +56,26 @@ extern "C" {
 #endif
 #if defined PGM_USART
   /* Baud rate configuration */
-#define BAUD (38400)
+#ifndef BAUD
+#define BAUD (115200)
+#endif
 
 #elif defined PGM_TWI
 #error not available yet
+#elif defined PGM_DUMMY
+#warning dummy communication
 #else
 #error define one of PGM_USART or PGM_TWI
 #endif
 
 #define FLASH_SIZE  (FLASHEND+1)
 
+  // initializations for ATmega8
 #ifdef _AVR_IOM8_H_
 
-#define BOOT_PAGES  16
+#ifndef BOOT_PAGES
+#define BOOT_PAGES  32
+#endif
 #if BOOT_PAGES == 4
   // 4 pages (12328 words)
   // .text=0xf80
@@ -48,7 +90,7 @@ extern "C" {
 #define BOOTEND_FUSE               (FUSE_BOOTSZ1)
 #elif BOOT_PAGES == 32
   // 32 pages
-  // .text=0xc00
+  // .text=0ce00
 #define BOOTEND_FUSE               (FUSE_BOOTSZ1 & FUSE_BOOTSZ0)
 #else
 #error undefined BOOT_PAGES
@@ -69,6 +111,8 @@ extern "C" {
 
 #ifdef	__cplusplus
 }
+#endif
+
 #endif
 
 #endif	/* INIT_H */

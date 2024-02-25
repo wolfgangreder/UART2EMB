@@ -43,22 +43,27 @@ public interface Bootloader extends AutoCloseable, Lookup.Provider
   public Set<BootloaderFeature> getFeatures();
 
   public boolean upload(MemorySpace memorySpace,
-                        InputStream is) throws IOException, UnsupportedOperationException;
+                        InputStream is,
+                        BootloaderListener listener) throws IOException, UnsupportedOperationException;
 
   public boolean download(MemorySpace memorySpace,
-                          OutputStream out) throws IOException, UnsupportedOperationException;
+                          OutputStream out,
+                          BootloaderListener listener) throws IOException, UnsupportedOperationException;
 
   public default boolean verify(MemorySpace memroySpace,
-                                InputStream toVerify) throws IOException, UnsupportedOperationException
+                                InputStream toVerify,
+                                BootloaderListener listener) throws IOException, UnsupportedOperationException
   {
     return verify(memroySpace,
                   toVerify,
-                  null);
+                  null,
+                  listener);
   }
 
   public default boolean verify(MemorySpace memorySpace,
                                 InputStream toVerify,
-                                Predicate<CompareResult> compareSink) throws IOException, UnsupportedOperationException
+                                Predicate<CompareResult> compareSink,
+                                BootloaderListener listener) throws IOException, UnsupportedOperationException
   {
     final AtomicBoolean success = new AtomicBoolean(true);
     final String runId = UUID.randomUUID().toString();
@@ -90,7 +95,8 @@ public interface Bootloader extends AutoCloseable, Lookup.Provider
            ++position;
          }
 
-       });
+       },
+               listener);
     } catch (IOException ex) {
       if (!runId.equals(ex.getMessage())) {
         throw ex;
@@ -99,13 +105,14 @@ public interface Bootloader extends AutoCloseable, Lookup.Provider
     return success.get();
   }
 
-  public default Optional<ByteBuffer> readSignature() throws IOException, UnsupportedOperationException
+  public default Optional<DeviceSignature> readSignature() throws IOException, UnsupportedOperationException
   {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     download(MemorySpace.SIGNATURE,
-             os);
+             os,
+             null);
     if (os.size() > 0) {
-      return Optional.of(ByteBuffer.wrap(os.toByteArray()).asReadOnlyBuffer());
+      return Optional.of(new DeviceSignature(ByteBuffer.wrap(os.toByteArray())));
     }
     return Optional.empty();
   }

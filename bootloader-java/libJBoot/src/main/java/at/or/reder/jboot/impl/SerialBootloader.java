@@ -16,8 +16,8 @@
 package at.or.reder.jboot.impl;
 
 import at.or.reder.jboot.BootloaderFactory;
+import gnu.io.PortFactory;
 import gnu.io.PortInUseException;
-import gnu.io.RXTXPort;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 import java.io.IOException;
@@ -25,21 +25,28 @@ import java.nio.channels.Channels;
 import java.util.Map;
 import java.util.logging.Level;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.openide.util.Lookup;
 
 /**
  *
  * @author Wolfgang Reder
  */
-@RequiredArgsConstructor
 @Log(topic = "at.or.reder.jboot")
 public abstract class SerialBootloader extends AbstractBootloader
 {
 
   @NonNull
   private final Map<String, String> properties;
-  private RXTXPort port;
+  private final PortFactory portFactory;
+  private SerialPort port;
+
+  protected SerialBootloader(Map<String, String> properties,
+                             PortFactory portFactory)
+  {
+    this.properties = properties;
+    this.portFactory = portFactory != null ? portFactory : Lookup.getDefault().lookup(PortFactory.class);
+  }
 
   public String getComPort()
   {
@@ -63,7 +70,7 @@ public abstract class SerialBootloader extends AbstractBootloader
   {
     if (port == null) {
       try {
-        RXTXPort p = new RXTXPort(getComPort());
+        SerialPort p = portFactory.createSerialPort(getComPort());
         try {
           p.setSerialPortParams(getBaudrate(),
                                 SerialPort.DATABITS_8,

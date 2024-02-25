@@ -15,17 +15,21 @@
  */
 package at.or.reder.jboot.impl.jboot;
 
+import at.or.reder.jboot.Bootloader;
 import at.or.reder.jboot.BootloaderFeature;
+import at.or.reder.jboot.BootloaderListener;
+import at.or.reder.jboot.DeviceSignature;
 import at.or.reder.jboot.JBootNative;
 import at.or.reder.jboot.MemorySpace;
-import at.or.reder.jboot.impl.Crc16InputStream;
 import at.or.reder.jboot.impl.SerialBootloader;
 import at.or.reder.jboot.impl.jboot.Record;
+import at.or.reder.jboot.io.util.Crc16;
+import gnu.io.PortFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.logging.Level;
 import lombok.NonNull;
@@ -46,26 +50,40 @@ final class JBootBootloader extends SerialBootloader
     @Override
     public boolean nop() throws IOException
     {
-      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+      return JBootBootloader.this.nop() == Response.RSP_OK_BOOTLOADER;
+    }
+
+    @Override
+    public OptionalInt getCrc16() throws IOException
+    {
+      Record response = sendReceive(Record.commandNop());
+      if (response.getResponse() == Response.RSP_OK_BOOTLOADER) {
+        return OptionalInt.of(response.getWordValue() & 0xffff);
+      } else {
+        return OptionalInt.empty();
+      }
     }
 
     @Override
     public boolean checkFirmware(int crc16) throws IOException
     {
-      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+      return sendReceive(Record.commandCheckProgram(crc16)).getResponse() == Response.RSP_OK_BOOTLOADER;
     }
 
     @Override
-    public ByteBuffer readSignature() throws IOException
+    public Optional<DeviceSignature> readSignature() throws IOException
     {
-      throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+      return JBootBootloader.this.readSignature();
     }
 
   };
+  private Record rebootRecord = Record.commandReboot();
 
-  public JBootBootloader(Map<String, String> settings)
+  public JBootBootloader(Map<String, String> settings,
+                         PortFactory portFactory)
   {
-    super(settings);
+    super(settings,
+          portFactory);
   }
 
   @Override
@@ -75,22 +93,72 @@ final class JBootBootloader extends SerialBootloader
                   BootloaderFeature.SIGNATURE_READ);
   }
 
+  private int readShort(InputStream streamIn,
+                        Crc16 crc) throws IOException
+  {
+    byte[] buffer = new byte[2];
+    int read = streamIn.read(buffer);
+    if (read == -1) {
+      return -1;
+    }
+    if (read == 1) {
+      buffer[1] = (byte) 0xff;
+    }
+    crc.update(buffer);
+    return (buffer[0] & 0xff) + ((buffer[1] & 0xff) << 8);
+  }
+
+  private static final int NUMBYTES = 0xffff;
+
   @Override
   public boolean upload(@NonNull MemorySpace memorySpace,
-                        @NonNull InputStream streamIn) throws IOException, UnsupportedOperationException
+                        @NonNull InputStream streamIn,
+                        BootloaderListener listener) throws IOException, UnsupportedOperationException
   {
+    if (listener == null) {
+      listener = (Bootloader bootloader, MemorySpace space, long bytesWritten, long bytesTotal) -> {
+      };
+    }
     if (memorySpace == MemorySpace.FLASH) {
       boolean result = false;
-      if (enterBootloader() == Response.RSP_OK) {
-        Response resp = Response.RSP_OK;
+      Record response = sendReceive(Record.commandEnterBootloader());
+      if (response.getResponse() == Response.RSP_OK_BOOTLOADER) {
+        long bytesToSend = response.getWordValue() & 0xffff;
+        long bytesSent = 0;
         Record toSend = Record.commandProgram(-1);
-        try (Crc16InputStream is = new Crc16InputStream(streamIn)) {
-          while (resp == Response.RSP_OK) {
-            resp = sendReceive(toSend.setByteValue(is.read())).getResponse();
+        Crc16 crc = new Crc16();
+        int read;
+        do {
+          read = readShort(streamIn,
+                           crc);
+          if (read != -1) {
+            response = sendReceive(toSend.setWordValue((short) read));
+            if (response.getResponse() == Response.RSP_OK_BOOTLOADER) {
+              bytesSent = response.getWordValue() & 0xffff;
+            }
           }
-          result = sendReceive(Record.commandCheckProgram(is.getCrc())).getResponse() == Response.RSP_OK;
+          listener.onTransfer(this,
+                              memorySpace,
+                              bytesSent,
+                              bytesToSend);
+        } while (read != -1 && response.getResponse() == Response.RSP_OK_BOOTLOADER && bytesSent < NUMBYTES);
+        toSend.setWordValue(0xffff);
+        while (response.getResponse() == Response.RSP_OK_BOOTLOADER && bytesSent < NUMBYTES) {
+          crc.update((byte) 0xff);
+          crc.update((byte) 0xff);
+          response = sendReceive(toSend);
+          if (response.getResponse() == Response.RSP_OK_BOOTLOADER) {
+            bytesSent = response.getWordValue() & 0xffff;
+            listener.onTransfer(this,
+                                memorySpace,
+                                bytesSent,
+                                bytesToSend);
+          }
         }
-        sendReceive(Record.commandReboot());
+        //result = sendReceive(Record.commandCheckProgram(crc.getDigest())).getResponse() == Response.RSP_OK_BOOTLOADER;
+        //if (result) {
+        rebootRecord = Record.commandReboot(crc.getDigest());
+        // }
       }
       return result;
     } else {
@@ -103,7 +171,7 @@ final class JBootBootloader extends SerialBootloader
   {
     if (super.isConnected()) {
       try {
-        return nop() == Response.RSP_OK;
+        return nop() == Response.RSP_OK_BOOTLOADER;
       } catch (IOException ex) {
         log.log(Level.SEVERE,
                 "isConnected",
@@ -114,12 +182,12 @@ final class JBootBootloader extends SerialBootloader
   }
 
   @Override
-  public Optional<ByteBuffer> readSignature() throws IOException, UnsupportedOperationException
+  public Optional<DeviceSignature> readSignature() throws IOException, UnsupportedOperationException
   {
-    if (enterBootloader() == Response.RSP_OK) {
+    if (enterBootloader() == Response.RSP_OK_BOOTLOADER) {
       Record response = sendReceive(Record.commandReadSignature());
-      if (response.getResponse() == Response.RSP_OK) {
-        return Optional.of(response.getData());
+      if (response.getResponse() == Response.RSP_OK_BOOTLOADER) {
+        return Optional.of(new DeviceSignature(response.getData()));
       }
     }
     return Optional.empty();
@@ -133,7 +201,8 @@ final class JBootBootloader extends SerialBootloader
 
   private Response enterBootloader() throws IOException
   {
-    return sendReceive(Record.commandEnterBootloader()).getResponse();
+    Record response = sendReceive(Record.commandEnterBootloader());
+    return response.getResponse();
   }
 
   private Record sendReceive(Record toSend) throws IOException
@@ -142,7 +211,12 @@ final class JBootBootloader extends SerialBootloader
       throw new IOException("Not connected");
     }
     Record response = new Record();
-    out.write(toSend.getBuffer());
+    toSend.getBuffer().mark();
+    try {
+      out.write(toSend.getBuffer());
+    } finally {
+      toSend.getBuffer().reset();
+    }
     in.read(response.getBuffer());
     return response;
   }
@@ -151,6 +225,13 @@ final class JBootBootloader extends SerialBootloader
   public Lookup getLookup()
   {
     return Lookups.singleton(nativeApi);
+  }
+
+  @Override
+  public void close() throws IOException
+  {
+    sendReceive(rebootRecord);
+    super.close();
   }
 
 }

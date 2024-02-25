@@ -15,29 +15,29 @@
  */
 package at.or.reder.jboot.impl;
 
+import at.or.reder.jboot.io.util.Crc16;
 import java.io.IOException;
 import java.io.InputStream;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
  *
  * @author Wolfgang Reder
  */
-@Getter
 @RequiredArgsConstructor
 public final class Crc16InputStream extends InputStream
 {
 
   private final InputStream wrapped;
-  private int crc = 0;
+  private final Crc16 crc = new Crc16();
 
   @Override
   public int read() throws IOException
   {
     int read = wrapped.read();
-    crc = crc16Update(crc,
-                      read);
+    if (read != -1) {
+      crc.update((byte) read);
+    }
     return read;
   }
 
@@ -49,9 +49,11 @@ public final class Crc16InputStream extends InputStream
     int result = wrapped.read(b,
                               off,
                               len);
-    crc16Update(b,
-                off,
-                result);
+    if (result != -1) {
+      crc.update(b,
+                 off,
+                 result);
+    }
     return result;
   }
 
@@ -63,31 +65,9 @@ public final class Crc16InputStream extends InputStream
                 b.length);
   }
 
-  private void crc16Update(byte[] b,
-                           int off,
-                           int len)
+  public int getCrc()
   {
-    for (int i = 0; i < len; ++i) {
-      crc = crc16Update(b[i + off],
-                        crc);
-    }
-  }
-
-  private int crc16Update(int crc,
-                          int a)
-  {
-    int i;
-
-    crc ^= a;
-    for (i = 0; i < 8; ++i) {
-      if ((crc & 1) != 0) {
-        crc = (crc >> 1) ^ 0xA001;
-      } else {
-        crc = (crc >> 1);
-      }
-    }
-
-    return crc;
+    return crc.getDigest();
   }
 
   @Override

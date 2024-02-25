@@ -15,9 +15,12 @@
  */
 package at.or.reder.jboot;
 
+import gnu.io.PortFactory;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -26,6 +29,8 @@ import java.util.UUID;
 public interface BootloaderFactory
 {
 
+  public static UUID ID_JBOOT = UUID.fromString("8d6672f5-6f95-4edb-a9b3-d65404529e2c");
+
   public static final String PROP_CONNECTION = "at.or.reder.jboot.connection";
   public static final String PROP_SPEED = "at.or.reder.jboot.speed";
 
@@ -33,6 +38,22 @@ public interface BootloaderFactory
 
   public UUID getId();
 
-  public Bootloader createBootloader(Map<String, String> properties) throws IOException;
+  public Bootloader createBootloader(Map<String, String> properties,
+                                     PortFactory portFactory) throws IOException;
+
+  public default Bootloader createBootloader(Map<String, String> properties) throws IOException
+  {
+    return createBootloader(properties,
+                            null);
+  }
+
+  public static Optional<BootloaderFactory> findFactory(UUID id)
+  {
+    return (Optional<BootloaderFactory>) Lookup.getDefault()
+            .lookupAll(BootloaderFactory.class)
+            .stream()
+            .filter(f -> f.getId().equals(id))
+            .findFirst();
+  }
 
 }

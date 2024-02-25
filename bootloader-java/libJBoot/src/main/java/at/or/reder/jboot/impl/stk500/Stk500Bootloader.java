@@ -15,8 +15,10 @@
  */
 package at.or.reder.jboot.impl.stk500;
 
+import at.or.reder.jboot.BootloaderListener;
 import at.or.reder.jboot.MemorySpace;
 import at.or.reder.jboot.impl.SerialBootloader;
+import gnu.io.PortFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -28,14 +30,17 @@ import java.util.Map;
 public class Stk500Bootloader extends SerialBootloader
 {
 
-  public Stk500Bootloader(Map<String, String> properties)
+  public Stk500Bootloader(Map<String, String> properties,
+                          PortFactory portFactory)
   {
-    super(properties);
+    super(properties,
+          portFactory);
   }
 
   @Override
   public boolean upload(MemorySpace memorySpace,
-                        InputStream is) throws IOException, UnsupportedOperationException
+                        InputStream is,
+                        BootloaderListener listener) throws IOException, UnsupportedOperationException
   {
     throw new UnsupportedOperationException();
   }

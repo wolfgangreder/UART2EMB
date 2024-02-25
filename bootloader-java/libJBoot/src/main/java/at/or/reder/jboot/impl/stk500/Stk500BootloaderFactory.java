@@ -17,6 +17,7 @@ package at.or.reder.jboot.impl.stk500;
 
 import at.or.reder.jboot.Bootloader;
 import at.or.reder.jboot.BootloaderFactory;
+import gnu.io.PortFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
@@ -43,9 +44,11 @@ public class Stk500BootloaderFactory implements BootloaderFactory
   }
 
   @Override
-  public Bootloader createBootloader(Map<String, String> properties) throws IOException
+  public Bootloader createBootloader(Map<String, String> properties,
+                                     PortFactory portFactory) throws IOException
   {
-    return new Stk500Bootloader(properties);
+    return new Stk500Bootloader(properties,
+                                portFactory);
   }
 
 }

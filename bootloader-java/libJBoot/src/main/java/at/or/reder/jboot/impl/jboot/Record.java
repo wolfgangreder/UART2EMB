@@ -24,12 +24,13 @@ import lombok.NonNull;
  *
  * @author Wolfgang Reder
  */
-final class Record
+public final class Record
 {
 
-  private static final byte SOH = (byte) 0x01;
-  private static final byte EOT = (byte) 0x04;
-  private final ByteBuffer buffer = ByteBuffer.allocate(7).order(ByteOrder.LITTLE_ENDIAN);
+  public static final int RECORDSIZE = 7;
+  public static final byte SOH = (byte) 0x01;
+  public static final byte EOT = (byte) 0x04;
+  private final ByteBuffer buffer;
 
   public static Record commandNop()
   {
@@ -43,7 +44,7 @@ final class Record
 
   public static Record commandProgram(int data)
   {
-    return new Record(Commands.CMD_PROGRAM).setByteValue(data);
+    return new Record(Commands.CMD_PROGRAM).setWordValue(data & 0xffff);
   }
 
   public static Record commandCheckProgram(int crc)
@@ -53,7 +54,20 @@ final class Record
 
   public static Record commandReboot()
   {
-    return new Record(Commands.CMD_REBOOT);
+    Record result = new Record(Commands.CMD_REBOOT);
+    result.getBuffer().put(1,
+                           RebootType.REBOOT_NORMAL.getMagic());
+    return result;
+  }
+
+  public static Record commandReboot(int crc)
+  {
+    Record result = new Record(Commands.CMD_REBOOT);
+    result.getBuffer().put(2,
+                           RebootType.REBOOT_CRC16.getMagic());
+    result.getBuffer().putShort(3,
+                                (short) crc);
+    return result;
   }
 
   public static Record commandReadSignature()
@@ -61,22 +75,43 @@ final class Record
     return new Record(Commands.CMD_READ_SIGNATURE);
   }
 
-  Record()
+  public Record()
   {
+    buffer = ByteBuffer.allocate(RECORDSIZE).order(ByteOrder.LITTLE_ENDIAN);
     buffer.array()[0] = SOH;
     buffer.array()[6] = EOT;
   }
 
-  Record(@NonNull Commands command)
+  public Record(@NonNull Commands command)
   {
+    buffer = ByteBuffer.allocate(RECORDSIZE).order(ByteOrder.LITTLE_ENDIAN);
     buffer.array()[0] = SOH;
     buffer.array()[6] = EOT;
     setCommand(command);
   }
 
+  public Record(@NonNull ByteBuffer buffer)
+  {
+    if (buffer.remaining() < RECORDSIZE) {
+      throw new IllegalArgumentException("invalid buffer size");
+    }
+
+    this.buffer = buffer.slice(buffer.position(),
+                               RECORDSIZE)
+            .duplicate()
+            .order(ByteOrder.LITTLE_ENDIAN);
+  }
+
   public Response getResponse()
   {
     return Response.valueOfMagic(buffer.get(1)).orElse(Response.RSP_ERR);
+  }
+
+  public Record setResponse(@NonNull Response response)
+  {
+    buffer.put(1,
+               response.getMagic());
+    return this;
   }
 
   public Commands getCommand()
@@ -130,7 +165,7 @@ final class Record
   public ByteBuffer getData()
   {
     return buffer.slice(2,
-                        4).duplicate();
+                        4).duplicate().rewind();
   }
 
   public Record setData(ByteBuffer bufferToCopy)
@@ -142,9 +177,33 @@ final class Record
     return this;
   }
 
+  public int getAddress()
+  {
+    return buffer.get(3) & 0xffff;
+  }
+
+  public Record setAddress(int address)
+  {
+    buffer.putShort(3,
+                    (short) address);
+    return this;
+  }
+
+  public int getMemValue()
+  {
+    return buffer.get(2) & 0xff;
+  }
+
+  public Record setMemValue(int memValue)
+  {
+    buffer.put(2,
+               (byte) memValue);
+    return this;
+  }
+
   public ByteBuffer getBuffer()
   {
-    return buffer.asReadOnlyBuffer();
+    return buffer;
   }
 
 }
